@@ -1,0 +1,16 @@
+{
+  "name": "boilerplate",
+  "private": true,
+  "scripts": {
+    "start": "meteor run --settings settings.json"
+  },
+  "dependencies": {
+    "@babel/runtime": "^7.0.0-beta.46",
+    "babel-runtime": "^6.26.0",
+    "bcrypt": "^1.0.3",
+    "meteor-node-stubs": "^0.3.2"
+  },
+  "devDependencies": {
+    "chai": "^4.1.2"
+  }
+}
