@@ -4,6 +4,7 @@ Accounts.onCreateUser((options, user) => {
     profile: {
       //publicly visible fields like firstname goes here
       role: 'user',
+      score: 0,
     },
   }, user);
   // We still want the default hook's 'profile' behavior.
