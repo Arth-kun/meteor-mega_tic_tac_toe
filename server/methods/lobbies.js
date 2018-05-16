@@ -113,6 +113,7 @@ Meteor.methods({
     const nextPlayer = lobby.nextPlayer == 'playerOne' ? 'playerTwo' : 'playerOne';
 
     Lobbies.update(_id, { $set: { updatedAt: new Date, nextPlayer, squares, active } });
+    return { lobby: Lobbies.findOne({ _id }) };
   },
   'lobbies.restart'({ _id }) {
     check(_id, String);
