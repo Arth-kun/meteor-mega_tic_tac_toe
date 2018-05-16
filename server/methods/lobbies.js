@@ -2,32 +2,75 @@ import { check } from 'meteor/check';
 import { Random } from 'meteor/random';
 
 import { Lobbies } from '../collections/lobbies';
-import * as GameResults from '../methods/gameResults';
+import { Players } from '../collections/players';
+import { GameResults } from '../collections/gameResults';
 
 Meteor.methods({
-  'lobbies.create'(playerOne) {
+  'lobbies.getAll'() {
+    let lobbies = Lobbies.find();
+    lobbies = lobbies.map(lobby => {
+      if (lobby.active || lobby.full) {
+        return {
+          ...lobby,
+          name: `${Players.findOne({ _id: lobby.playerOne }).pseudo} - ${lobby.playerTwo ? Players.findOne({ _id: lobby.playerTwo }).pseudo : ''}`,
+        }
+      }
+    });
+
+    return { lobbies };
+  },
+  'lobbies.getOne'({ _id }) {
+    check(_id, String);
+
+    let lobby = Lobbies.findOne({ _id });
+
+    if(!lobby) {
+      return {}
+    }
+
+    if (!lobby.active) {
+      const gameResults = GameResults.findOne({ lobbyId: _id }, { sort: { createdAt: -1 } });
+      const winner = gameResults.result != 'draw' ? Players.findOne({ _id: lobby[gameResults.result] }).pseudo : gameResults.result;
+      lobby = { ...lobby, winner };
+    }
+
+    return { lobby };
+  },
+  'lobbies.create'({ playerOne }) {
     check(playerOne, String);
 
-    const lobby = {
+    let lobby = {
       playerOne,
-      nextPlayer: Random('playerOne', 'playerTwo'),
+      nextPlayer: Random.choice(['playerOne', 'playerTwo']),
       squares: Array(9).fill(null),
       active: true,
       full: false,
     };
 
-    Lobbies.insert(lobby);
+    lobby = Lobbies.insert(lobby);
+    lobby = Lobbies.findOne({ _id: lobby });
+
+    return { lobby };
   },
-  'lobbies.join'(_id, playerTwo) {
+  'lobbies.join'({ _id, playerTwo }) {
     check(_id, String);
     check(playerTwo, String);
 
-    Lobbies.update(_id, { $set: { updatedAt: new Date, playerTwo, full: true } });
+    let lobby = Lobbies.findOne({ _id });
+
+    if(lobby.playerOne !== playerTwo && lobby.playerTwo !== playerTwo) {
+      if (lobby.full) {
+        throw new Meteor.Error('game-already-full');
+      }
+      Lobbies.update(_id, { $set: { updatedAt: new Date, playerTwo, full: true } });
+    }
+
+    lobby = Lobbies.findOne({ _id });
+    return { lobby };
   },
-  'lobbies.play'(_id, player, squareClicked) {
+  'lobbies.play'({ _id, player, squareClicked }) {
     check(_id, String);
     check(player, String);
-    check(squareClicked, Number);
 
     const lobby = Lobbies.findOne({ _id });
     let active = true;
@@ -62,13 +105,16 @@ Meteor.methods({
       }
       Meteor.call('gameResults.create', _id, result);
       active = false;
+    } else if (squares.find(square => square === null) === undefined) {
+      Meteor.call('gameResults.create', _id, 'draw');
+      active = false;
     }
 
     const nextPlayer = lobby.nextPlayer == 'playerOne' ? 'playerTwo' : 'playerOne';
 
-    Lobbies.update(_id, { $set: { updatedAt: new Date, nextPlayer, square, active } });
+    Lobbies.update(_id, { $set: { updatedAt: new Date, nextPlayer, squares, active } });
   },
-  'lobbies.restart'(_id) {
+  'lobbies.restart'({ _id }) {
     check(_id, String);
 
     const lobby = Lobbies.findOne({ _id });
@@ -77,9 +123,9 @@ Meteor.methods({
       throw new Meteor.Error('lobby-already-active');
     }
 
-    Lobbies.update(_id, { $set: { updatedAt: new Date, active: true, square: Array(9).fill(null), nextPlayer: Random('playerOne', 'playerTwo')} });
+    Lobbies.update(_id, { $set: { updatedAt: new Date, active: true, squares: Array(9).fill(null), nextPlayer: Random.choice(['playerOne', 'playerTwo'])} });
   },
-  'lobbies.leave'(_id, player) {
+  'lobbies.leave'({ _id, player }) {
     check(_id, String);
     check(player, String);
 
@@ -93,7 +139,6 @@ Meteor.methods({
       Lobbies.update(_id, { $set: { updatedAt: new Date, playerTwo: null, full: false } });
     }
 
-    Lobbies.update(_id, { $set: { updatedAt: new Date, active: false } });
   },
   'lobbies.terminate'(_id, ended, result) {
     check(_id, String);
@@ -106,7 +151,6 @@ Meteor.methods({
     Lobbies.update(_id, { $set: { updatedAt: new Date, active: false } });
   },
 });
-
 
 
 function calculateWinner(squares) {

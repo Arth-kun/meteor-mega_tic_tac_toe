@@ -13,7 +13,7 @@ Lobbies.schema = new SimpleSchema({
     allowedValues: ['playerOne', 'playerTwo'],
   },
   squares: {
-    type: [Number],
+    type: [String],
   },
   active: {
     type: Boolean,
