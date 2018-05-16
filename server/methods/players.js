@@ -22,26 +22,23 @@ Meteor.methods({
   },
   'players.get'({ pseudo }) {
     check(pseudo, String);
-    // console.log('====================================');
-    // console.log(this.request.connection.remoteAddress);
-    // console.log('====================================');
-    
+
     let player = Players.findOne({ pseudo });
 
-    const activeLobbies = Lobbies.find({ active: true });
-    if (activeLobbies) {
-      const lobbyId = activeLobbies.map(lobby => {
-        if (lobby.playerOne === player._id || lobby.playerTwo === player._id) {
-          return lobby._id
-        }
-      });
+    // const activeLobbies = Lobbies.find({ active: true });
+    // if (activeLobbies) {
+    //   const lobbyId = activeLobbies.map(lobby => {
+    //     if (lobby.playerOne === player._id || lobby.playerTwo === player._id) {
+    //       return lobby._id
+    //     }
+    //   });
 
-      if (lobbyId.length > 1) {
-        throw new Meteor.Error('MULTIPLE LOBBIES ACTIVE IN THE SAME TIME FOR THE SAME PLAYER');              
-      } else if (lobbyId.length > 0) {
-        player = { ...player, lobbyId: lobbyId[0] };
-      }
-    }
+    //   if (lobbyId.length > 1) {
+    //     throw new Meteor.Error('MULTIPLE LOBBIES ACTIVE IN THE SAME TIME FOR THE SAME PLAYER');              
+    //   } else if (lobbyId.length > 0) {
+    //     player = { ...player, lobbyId: lobbyId[0] };
+    //   }
+    // }
 
     return { player }
   },
