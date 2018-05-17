@@ -40,6 +40,8 @@ Meteor.methods({
     //   }
     // }
 
+    const player = Players.findOne({ pseudo });
+
     return { player }
   },
   'players.getById'({ playerId }) {
