@@ -149,7 +149,7 @@ Meteor.methods({
       Meteor.call('gameResults.create', _id, result);
     }
 
-    Lobbies.update(_id, { $set: { updatedAt: new Date, active: false } });
+    Lobbies.remove(_id);
   },
 });
 
