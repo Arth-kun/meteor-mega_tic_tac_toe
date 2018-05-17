@@ -42,10 +42,15 @@ Meteor.methods({
 
     return { player }
   },
-  'players.update'({ _id, pseudo }) {
-    check(_id, String);
+  'players.getById'({ playerId }) {
+    check(playerId, String);
+    const player = Players.findOne({ _id: playerId });
+    return { player }; 
+  },
+  'players.update'({ playerId, pseudo }) {
+    check(playerId, String);
     check(pseudo, String);
 
-    Players.update(_id, { $set: { updatedAt: new Date, pseudo } });
+    Players.update(_id: playerId, { $set: { updatedAt: new Date, pseudo } });
   },
 });
