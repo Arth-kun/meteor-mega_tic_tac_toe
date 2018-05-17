@@ -7,23 +7,23 @@ Meteor.methods({
   'players.insert'({ pseudo }) {
     check(pseudo, String);
 
-    if(Players.findOne({ pseudo })) {
-      throw new Meteor.Error('already-taken');      
+    const regPseudo = { $regex: `.*${pseudo}.*`, $options: 'i' };
+    if(Players.findOne({ pseudo: regPseudo })) {
+      throw new Meteor.Error('already-taken');
     }
-
+    
     let player = {
       pseudo,
       score: 0,
-    };
+    }
 
-    Players.insert(player);
-    player = Players.findOne({ pseudo });
+    const playerId = Players.create(player);
+    let player = Players.findOne({ _id: playerId });
+
     return { player };
   },
   'players.get'({ pseudo }) {
     check(pseudo, String);
-
-    let player = Players.findOne({ pseudo });
 
     // const activeLobbies = Lobbies.find({ active: true });
     // if (activeLobbies) {
@@ -51,6 +51,6 @@ Meteor.methods({
     check(playerId, String);
     check(pseudo, String);
 
-    Players.update(_id: playerId, { $set: { updatedAt: new Date, pseudo } });
+    Players.update({ _id: playerId }, { $set: { updatedAt: new Date, pseudo } });
   },
 });
