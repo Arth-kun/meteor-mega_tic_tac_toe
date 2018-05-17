@@ -17,7 +17,7 @@ Meteor.methods({
       score: 0,
     }
 
-    const playerId = Players.create(player);
+    const playerId = Players.insert(player);
     player = Players.findOne({ _id: playerId });
 
     return { player };
