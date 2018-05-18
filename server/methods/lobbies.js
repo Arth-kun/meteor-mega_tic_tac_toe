@@ -39,6 +39,10 @@ Meteor.methods({
   'lobbies.create'({ playerOne }) {
     check(playerOne, String);
 
+    if (playerOne.lobbyId) {
+      throw new Meteor.Error('cant-have-more-than-one-lobby');
+    }
+
     let lobby = {
       playerOne,
       nextPlayer: Random.choice(['playerOne', 'playerTwo']),
@@ -48,6 +52,7 @@ Meteor.methods({
     };
 
     lobby = Lobbies.insert(lobby);
+    Players.update({ _id: playerOne }, { $set: { updatedAt: new Date, lobbyId: lobby } });
     lobby = Lobbies.findOne({ _id: lobby });
 
     return { lobby };
@@ -58,11 +63,16 @@ Meteor.methods({
 
     let lobby = Lobbies.findOne({ _id });
 
+    if(playerTwo.lobbyId) {
+      throw new Meteor.Error('cant-have-more-than-one-lobby');  
+    }
+
     if(lobby.playerOne !== playerTwo && lobby.playerTwo !== playerTwo) {
       if (lobby.full) {
         throw new Meteor.Error('game-already-full');
       }
       Lobbies.update(_id, { $set: { updatedAt: new Date, playerTwo, full: true } });
+      Players.update({ _id: playerTwo }, { $set: { updatedAt: new Date, lobbyId: _id } });      
     }
 
     lobby = Lobbies.findOne({ _id });
@@ -131,6 +141,8 @@ Meteor.methods({
     check(player, String);
 
     const lobby = Lobbies.findOne({ _id });
+
+    Players.update({ _id: player }, { $set: { updatedAt: new Date, lobbyId: null } });          
 
     if (player == lobby.playerOne && lobby.playerTwo == null) {
       Meteor.call('lobbies.terminate', _id, false);

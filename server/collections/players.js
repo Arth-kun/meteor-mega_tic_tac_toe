@@ -7,6 +7,10 @@ Players.schema = new SimpleSchema({
   score: {
     type: Number,
   },
+  lobbyId: {
+    type: String,
+    optional: true
+  },
   createdAt: {
     type: Date,
     autoValue: function () {
